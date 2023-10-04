@@ -1,0 +1,16 @@
+plugin.tx_mfaprotect {
+    view {
+        templateRootPaths {
+            0 = EXT:mfa_protect/Resources/Private/Templates/
+            1 = {$plugin.tx_mfaprotect.view.templateRootPath}
+        }
+        partialRootPaths {
+            0 = EXT:mfa_protect/Resources/Private/Partials/
+            1 = {$plugin.tx_mfaprotect.view.partialRootPath}
+        }
+        layoutRootPaths {
+            0 = EXT:mfa_protect/Resources/Private/Layouts/
+            1 = {$plugin.tx_mfaprotect.view.layoutRootPath}
+        }
+    }
+}
