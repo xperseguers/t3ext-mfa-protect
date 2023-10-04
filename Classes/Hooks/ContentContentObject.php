@@ -27,8 +27,8 @@ class ContentContentObject
         // TODO: check if MFA is fresh enough
 
         // If not: replace content element with our protection plugin
-        $row['header'] = 'Protected content';
-        $row['CType'] = 'text';
-        $row['bodytext'] = '<p>This content element is protected by MFA</p>';
+        $row['header_layout'] = 100;    // hidden
+        $row['CType'] = 'list';
+        $row['list_type'] = 'mfaprotect_overlay';
     }
 }
