@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<xliff version="1.0">
+	<file source-language="en" datatype="plaintext" original="messages" date="2023-10-04T17:40:02Z" product-name="mfa_protect">
+		<header/>
+		<body>
+			<trans-unit id="tt_content.tx_mfaprotect_enable">
+				<source>Protect with MFA</source>
+			</trans-unit>
+            <trans-unit id="tt_content.tx_mfaprotect_enable.description">
+                <source>Enforce authenticated user to provide a relatively fresh MFA token before showing this content element.</source>
+            </trans-unit>
+		</body>
+	</file>
+</xliff>
