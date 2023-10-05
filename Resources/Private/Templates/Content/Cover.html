@@ -1,22 +1,30 @@
 <html xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers"
       data-namespace-typo3-fluid="true">
 
-<f:comment>
-    <!--
-    Please note that the minimal suggested markup if you want to
-    customize this template is as follows:
-    -->
-    <form method="post">
-        <input type="text" name="tx_mfaprotect_otp" pattern="[0-9]*" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
-        <button type="sbumit">OK</button>
-    </form>
-</f:comment>
-
 <div class="mfaprotect">
     <link rel="stylesheet" href="{f:uri.resource(path: 'Css/otp.css')}" media="all"/>
 
     <h4 class="alert-heading">Protected content</h4>
+
+    <f:if condition="{firstOnPage}">
+        <f:render section="OTP"/>
+    </f:if>
+</div>
+
+<f:section name="OTP">
+    <f:comment>
+        <!--
+        Please note that the minimal suggested markup if you want to
+        customize this template is as follows:
+        -->
+        <form method="post">
+            <input type="text" name="tx_mfaprotect_otp" pattern="[0-9]*" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
+            <button type="sbumit">OK</button>
+        </form>
+    </f:comment>
+
     <p>Enter the code generated on your mobile device below to show.</p>
+
     <form method="post" class="mfaprotect-digits" autocomplete="off">
         <input type="hidden" id="mfaprotect-otp" name="tx_mfaprotect_otp" value=""/>
 
@@ -29,7 +37,8 @@
             <input type="number" class="otp__digit otp__field__6"/>
         </div>
     </form>
+
     <script src="{f:uri.resource(path: 'JavaScript/otp.js')}"></script>
-</div>
+</f:section>
 
 </html>

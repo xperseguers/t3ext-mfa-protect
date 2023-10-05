@@ -24,6 +24,8 @@ use TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer;
 
 class ContentController extends ActionController
 {
+    protected static int $instances = 0;
+
     protected ContentObjectRenderer $contentObjectRenderer;
 
     public function __construct(ContentObjectRenderer $contentObjectRenderer)
@@ -36,7 +38,9 @@ class ContentController extends ActionController
         if ($this->isMfaTokenRecent()) {
             $html = $this->renderActualContent();
         } else {
+            $this->view->assign('firstOnPage', static::$instances === 0);
             $html = $this->view->render();
+            static::$instances++;
         }
 
         return $this->htmlResponse($html);
@@ -44,6 +48,7 @@ class ContentController extends ActionController
 
     protected function isMfaTokenRecent(): bool
     {
+        // TODO: check on 'POST' and static::$instance === 0 when MFA check below is implemented
         if ($this->request->getMethod() === 'POST') {
             $otp = $this->request->getParsedBody()['tx_mfaprotect_otp'] ?? '';
             if (preg_match('/^[0-9]{6}$/', $otp)) {
