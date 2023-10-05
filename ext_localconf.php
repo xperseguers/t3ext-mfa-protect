@@ -12,12 +12,12 @@ defined('TYPO3') || die();
 
     \TYPO3\CMS\Extbase\Utility\ExtensionUtility::configurePlugin(
         $_EXTKEY,
-        'Overlay',
+        'Content',
         [
-            \Causal\MfaProtect\Controller\OverlayController::class => 'show',
+            \Causal\MfaProtect\Controller\ContentController::class => 'cover',
         ],
         [
-            \Causal\MfaProtect\Controller\OverlayController::class => 'show',
+            \Causal\MfaProtect\Controller\ContentController::class => 'cover',
         ]
     );
 })('mfa_protect');

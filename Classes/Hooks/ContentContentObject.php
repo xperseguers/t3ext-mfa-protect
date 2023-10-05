@@ -26,23 +26,15 @@ class ContentContentObject
             return;
         }
 
-        /** @var ServerRequest $request */
-        $request = $GLOBALS['TYPO3_REQUEST'];
-        if ($request->getMethod() === 'POST') {
-            $otp = $request->getParsedBody()['tx_mfaprotect_otp'] ?? '';
-            if (preg_match('/^[0-9]{6}$/', $otp)) {
-                // TODO: check OTP and store as used recently
-                if ($otp === '123456') {
-                    return;
-                }
-            }
-        }
-
-        // TODO: check if MFA is fresh enough
-
-        // If not: replace content element with our protection plugin
+        // Systematically replace content element with our protection plugin wrapper
         $row['header_layout'] = 100;    // hidden
         $row['CType'] = 'list';
-        $row['list_type'] = 'mfaprotect_overlay';
+        $row['list_type'] = 'mfaprotect_content';
+        $row['tstamp'] = $GLOBALS['EXEC_TIME'];
+
+        // Ensure TYPO3 does not cache the output!
+        /** @var ServerRequest $request */
+        $request = $GLOBALS['TYPO3_REQUEST'];
+        $request->getAttribute('frontend.controller')->no_cache = true;
     }
 }
