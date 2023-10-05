@@ -16,9 +16,11 @@ declare(strict_types=1);
 
 namespace Causal\MfaProtect\Controller;
 
+use CodeFareith\CfGoogleAuthenticator\Utility\GoogleAuthenticatorUtility;
 use Psr\Http\Message\ResponseInterface;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\TypoScript\TypoScriptService;
+use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
 use TYPO3\CMS\Frontend\Authentication\FrontendUserAuthentication;
@@ -38,12 +40,13 @@ class ContentController extends ActionController
 
     public function coverAction(): ResponseInterface
     {
+        static::$instances++;
+
         if ($this->isMfaTokenRecent()) {
             $html = $this->renderActualContent();
         } else {
-            $this->view->assign('firstOnPage', static::$instances === 0);
+            $this->view->assign('firstOnPage', static::$instances === 1);
             $html = $this->view->render();
-            static::$instances++;
         }
 
         return $this->htmlResponse($html);
@@ -51,14 +54,22 @@ class ContentController extends ActionController
 
     protected function isMfaTokenRecent(): bool
     {
-        if ($this->request->getMethod() === 'POST' && static::$instances === 0) {
+        if ($this->request->getMethod() === 'POST' && static::$instances === 1) {
             $otp = $this->request->getParsedBody()['tx_mfaprotect_otp'] ?? '';
             if (preg_match('/^[0-9]{6}$/', $otp)) {
-                // TODO: check OTP and store as used recently
-                if ($otp === '123456') {
-                    $this->getFrontendUserAuthentication()->setSessionData('mfa_protect.time', $GLOBALS['EXEC_TIME']);
-                    // TODO: shall we redirect instead in order to prevent serving from a POST request?
-                    return true;
+                if (ExtensionManagementUtility::isLoaded('cf_google_authenticator')) {
+                    $user = $this->getFrontendUserAuthentication()->user;
+                    $mfaEnabled = (bool)$user['tx_cfgoogleauthenticator_enabled'];
+                    $secret = $user['tx_cfgoogleauthenticator_secret'];
+
+                    if ($mfaEnabled && GoogleAuthenticatorUtility::verifyOneTimePassword($secret, $otp) === true) {
+                        $this->getFrontendUserAuthentication()->setSessionData('mfa_protect.time', $GLOBALS['EXEC_TIME']);
+
+                        // TODO: shall we redirect instead in order to prevent serving from a POST request?
+                        return true;
+                    }
+                } else {
+                    throw new \RuntimeException('Sorry, we currently don\'t know how to validate your MFA token', 1696525584);
                 }
             }
         }
