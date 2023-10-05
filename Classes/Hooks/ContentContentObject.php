@@ -16,12 +16,26 @@ declare(strict_types=1);
 
 namespace Causal\MfaProtect\Hooks;
 
+use TYPO3\CMS\Core\Http\ServerRequest;
+
 class ContentContentObject
 {
     public function modifyDBRow(array &$row, string $table): void
     {
         if ($table !== 'tt_content' || !(bool)$row['tx_mfaprotect_enable']) {
             return;
+        }
+
+        /** @var ServerRequest $request */
+        $request = $GLOBALS['TYPO3_REQUEST'];
+        if ($request->getMethod() === 'POST') {
+            $otp = $request->getParsedBody()['tx_mfaprotect_otp'] ?? '';
+            if (preg_match('/^[0-9]{6}$/', $otp)) {
+                // TODO: check OTP and store as used recently
+                if ($otp === '123456') {
+                    return;
+                }
+            }
         }
 
         // TODO: check if MFA is fresh enough
