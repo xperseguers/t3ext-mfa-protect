@@ -33,6 +33,9 @@ and then:
 composer require codefareith/cf-google-authenticator:dev-feature/TYPO3v12
 ```
 
+_(don't worry about reading "TYPO3v12" as it's actually compatible with both
+TYPO3 v11 and v12)_
+
 
 ## Configuration
 
