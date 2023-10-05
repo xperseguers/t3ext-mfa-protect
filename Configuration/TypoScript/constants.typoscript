@@ -7,4 +7,9 @@ plugin.tx_mfaprotect {
         # cat=plugin.tx_mfaprotect/file; type=string; label=Path to template layouts (FE)
         layoutRootPath = EXT:mfa_protect/Resources/Private/Layouts/
     }
+
+    settings {
+        # cat=plugin.tx_mfaprotect/dims; type=int+; label=Validity of a MFA token (in minutes)
+        tokenValidity = 30
+    }
 }

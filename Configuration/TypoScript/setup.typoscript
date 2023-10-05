@@ -13,4 +13,8 @@ plugin.tx_mfaprotect {
             1 = {$plugin.tx_mfaprotect.view.layoutRootPath}
         }
     }
+
+    settings {
+        tokenValidity = {$plugin.tx_mfaprotect.settings.tokenValidity}
+    }
 }
