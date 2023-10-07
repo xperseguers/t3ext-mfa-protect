@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<xliff version="1.0">
+	<file source-language="en" datatype="plaintext" original="messages" date="2023-10-07T12:19:25Z" product-name="mfa_protect">
+		<header/>
+		<body>
+			<trans-unit id="cover.heading">
+				<source>Protected content</source>
+			</trans-unit>
+            <trans-unit id="cover.bodyInput">
+				<source>Enter the code generated on your mobile device below to show.</source>
+			</trans-unit>
+			<trans-unit id="cover.bodyConfigure">
+				<source>Please configure MFA for your account in order to access this content.</source>
+			</trans-unit>
+			<trans-unit id="cover.bodyConfigureLink">
+				<source>Click here to proceed</source>
+			</trans-unit>
+		</body>
+	</file>
+</xliff>

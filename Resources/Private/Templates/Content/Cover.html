@@ -6,7 +6,9 @@
 </f:if>
 
 <div class="mfaprotect">
-    <h4 class="alert-heading">Protected content</h4>
+    <h4 class="alert-heading">
+        <f:translate id="cover.heading" extensionName="mfa_protect"/>
+    </h4>
 
     <f:if condition="{isFirstOnPage}">
         <f:if condition="{hasMfa}">
@@ -32,7 +34,7 @@
         </form>
     </f:comment>
 
-    <p>Enter the code generated on your mobile device below to show.</p>
+    <p><f:translate id="cover.bodyInput" extensionName="mfa_protect"/></p>
 
     <form method="post" class="mfaprotect-digits" autocomplete="off">
         <input type="hidden" id="mfaprotect-otp" name="tx_mfaprotect_otp" value=""/>
@@ -51,11 +53,13 @@
 </f:section>
 
 <f:section name="ConfigureMfa">
-    Please configure MFA for your account in order to access this content.
+    <f:translate id="cover.bodyConfigure" extensionName="mfa_protect"/>
 
     <f:if condition="{settings.setupMfaUid}">
         <br/>
-        <f:link.page pageUid="{settings.setupMfaUid}">Click here to proceed</f:link.page>
+        <f:link.page pageUid="{settings.setupMfaUid}">
+            <f:translate id="cover.bodyConfigureLink" extensionName="mfa_protect"/>
+        </f:link.page>
     </f:if>
 </f:section>
 
