@@ -9,6 +9,8 @@ plugin.tx_mfaprotect {
     }
 
     settings {
+        # cat=plugin.tx_mfaprotect/file; type=int+; label=UID of the page to set up MFA
+        setupMfaUid =
         # cat=plugin.tx_mfaprotect/dims; type=int+; label=Validity of a MFA token (in minutes)
         tokenValidity = 30
     }

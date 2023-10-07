@@ -45,7 +45,12 @@ class ContentController extends ActionController
         if ($this->isMfaTokenRecent()) {
             $html = $this->renderActualContent();
         } else {
-            $this->view->assign('firstOnPage', static::$instances === 1);
+            $hasMfa = $this->hasUserMfa();
+            $isFirstOnPage = static::$instances === 1;
+            $this->view->assignMultiple([
+                'hasMfa' => $hasMfa,
+                'isFirstOnPage' => $isFirstOnPage,
+            ]);
             $html = $this->view->render();
         }
 
@@ -78,6 +83,19 @@ class ContentController extends ActionController
         $lastCheck = $this->getFrontendUserAuthentication()->getSessionData('mfa_protect.time') ?: 0;
 
         return $lastCheck >= $tokenValidity;
+    }
+
+    protected function hasUserMfa(): bool
+    {
+        $user = $this->getFrontendUserAuthentication()->user;
+
+        if (ExtensionManagementUtility::isLoaded('cf_google_authenticator')) {
+            return (bool)$user['tx_cfgoogleauthenticator_enabled'];
+        }
+
+        $mfa = json_decode($user['mfa'] ?? '', true) ?? [];
+        // TODO: add support for any kind of MFA
+        return $mfa['totp']['active'] ?? false;
     }
 
     protected function renderActualContent(): string
