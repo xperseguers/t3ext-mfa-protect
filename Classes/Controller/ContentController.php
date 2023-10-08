@@ -47,10 +47,10 @@ class ContentController extends ActionController
         if ($validTokenProvided || $this->isMfaTokenRecent()) {
             $html = $this->renderActualContent();
         } else {
-            $hasMfa = $this->hasUserMfa();
+            $availableMfaProviders = $this->getAvailableMfaProviders();
             $isFirstOnPage = static::$instances === 1;
             $this->view->assignMultiple([
-                'hasMfa' => $hasMfa,
+                'availableMfaProviders' => $availableMfaProviders,
                 'isFirstOnPage' => $isFirstOnPage,
             ]);
             $html = $this->view->render();
@@ -62,14 +62,14 @@ class ContentController extends ActionController
     protected function checkNewMfaToken(): bool
     {
         if ($this->request->getMethod() === 'POST' && static::$instances === 1) {
-            $otp = $this->request->getParsedBody()['tx_mfaprotect_otp'] ?? '';
-            if (preg_match('/^[0-9]{6}$/', $otp)) {
+            $totp = $this->request->getParsedBody()['totp'] ?? '';
+            if (preg_match('/^[0-9]{6}$/', $totp)) {
                 if (ExtensionManagementUtility::isLoaded('cf_google_authenticator')) {
                     $user = $this->getFrontendUserAuthentication()->user;
                     $mfaEnabled = (bool)$user['tx_cfgoogleauthenticator_enabled'];
                     $secret = $user['tx_cfgoogleauthenticator_secret'];
 
-                    if ($mfaEnabled && GoogleAuthenticatorUtility::verifyOneTimePassword($secret, $otp) === true) {
+                    if ($mfaEnabled && GoogleAuthenticatorUtility::verifyOneTimePassword($secret, $totp) === true) {
                         $this->getFrontendUserAuthentication()->setSessionData('mfa_protect.time', $GLOBALS['EXEC_TIME']);
 
                         // TODO: shall we redirect instead in order to prevent serving from a POST request?
@@ -92,17 +92,19 @@ class ContentController extends ActionController
         return $lastCheck >= $tokenValidity;
     }
 
-    protected function hasUserMfa(): bool
+    protected function getAvailableMfaProviders(): array
     {
         $user = $this->getFrontendUserAuthentication()->user;
 
         if (ExtensionManagementUtility::isLoaded('cf_google_authenticator')) {
-            return (bool)$user['tx_cfgoogleauthenticator_enabled'];
+            $hasTotp = (bool)$user['tx_cfgoogleauthenticator_enabled'];
+        } else {
+            // TODO: add support for any kind of MFA
+            $mfa = json_decode($user['mfa'] ?? '', true) ?? [];
+            $hasTotp = $mfa['totp']['active'] ?? false;
         }
 
-        $mfa = json_decode($user['mfa'] ?? '', true) ?? [];
-        // TODO: add support for any kind of MFA
-        return $mfa['totp']['active'] ?? false;
+        return $hasTotp ? ['totp'] : [];
     }
 
     protected function renderActualContent(): string

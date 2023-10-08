@@ -11,25 +11,27 @@
     </h4>
 
     <f:if condition="{isFirstOnPage}">
-        <f:if condition="{hasMfa}">
+        <f:if condition="{availableMfaProviders}">
             <f:then>
-                <f:render section="OTP"/>
+                <!-- If there are multiple MFA providers available, let the user choose one -->
+                <f:render section="totp"/>
             </f:then>
             <f:else>
-                <f:render section="ConfigureMfa"/>
+                <f:render section="configureMfa"/>
             </f:else>
         </f:if>
     </f:if>
 </div>
 
-<f:section name="OTP">
+<f:section name="totp">
     <f:comment>
         <!--
         Please note that the minimal suggested markup if you want to
         customize this template is as follows:
         -->
         <form method="post">
-            <input type="text" name="tx_mfaprotect_otp" pattern="[0-9]*" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
+            <input type="hidden" name="provider" value="totp"/>
+            <input type="text" name="totp" pattern="[0-9]*" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
             <button type="submit">OK</button>
         </form>
     </f:comment>
@@ -37,7 +39,8 @@
     <p><f:translate id="cover.bodyInput" extensionName="mfa_protect"/></p>
 
     <form method="post" class="mfaprotect-digits" autocomplete="off">
-        <input type="hidden" id="mfaprotect-otp" name="tx_mfaprotect_otp" value=""/>
+        <input type="hidden" name="provider" value="totp"/>
+        <input type="hidden" name="totp" id="mfaprotect-otp" value=""/>
 
         <div class="otp-input-fields">
             <input type="number" class="otp__digit otp__field__1"/>
@@ -52,7 +55,7 @@
     <script src="{f:uri.resource(path: 'JavaScript/otp.js')}"></script>
 </f:section>
 
-<f:section name="ConfigureMfa">
+<f:section name="configureMfa">
     <f:translate id="cover.bodyConfigure" extensionName="mfa_protect"/>
 
     <f:if condition="{settings.setupMfaUid}">
