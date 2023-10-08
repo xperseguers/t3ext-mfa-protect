@@ -42,7 +42,9 @@ class ContentController extends ActionController
     {
         static::$instances++;
 
-        if ($this->isMfaTokenRecent()) {
+        $validTokenProvided = $this->checkNewMfaToken();
+
+        if ($validTokenProvided || $this->isMfaTokenRecent()) {
             $html = $this->renderActualContent();
         } else {
             $hasMfa = $this->hasUserMfa();
@@ -57,7 +59,7 @@ class ContentController extends ActionController
         return $this->htmlResponse($html);
     }
 
-    protected function isMfaTokenRecent(): bool
+    protected function checkNewMfaToken(): bool
     {
         if ($this->request->getMethod() === 'POST' && static::$instances === 1) {
             $otp = $this->request->getParsedBody()['tx_mfaprotect_otp'] ?? '';
@@ -79,6 +81,11 @@ class ContentController extends ActionController
             }
         }
 
+        return false;
+    }
+
+    protected function isMfaTokenRecent(): bool
+    {
         $tokenValidity = $this->getTokenValidity();
         $lastCheck = $this->getFrontendUserAuthentication()->getSessionData('mfa_protect.time') ?: 0;
 
