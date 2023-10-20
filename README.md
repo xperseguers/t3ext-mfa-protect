@@ -22,25 +22,14 @@ composer require causal/mfa-protect:dev-main
 ```
 
 In addition, you will need some extension adding support for Frontend MFA. At the
-time of writing, the only one the author can think of is its own fork of
-[EXT:cf_google_authenticator](https://extensions.typo3.org/extension/cf_google_authenticator).
+time of writing, the only one the author can think of is its own extension
+[EXT:mfa_frontend](https://extensions.typo3.org/extension/mfa_frontend).
 
-You may install it by adding/extending this to your site's `composer.json`:
-
-```json
-"repositories": [
-    {"type": "git", "url": "https://github.com/xperseguers/cf_google_authenticator.git"}
-],
-```
-
-and then:
+You may install it with composer:
 
 ```bash
-composer require codefareith/cf-google-authenticator:dev-feature/TYPO3v12
+composer require causal/mfa-frontend:dev-main
 ```
-
-_(don't worry about reading "TYPO3v12" as it's actually compatible with both
-TYPO3 v11 and v12)_
 
 
 ## Configuration

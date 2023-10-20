@@ -16,8 +16,8 @@ declare(strict_types=1);
 
 namespace Causal\MfaProtect\Controller;
 
-use CodeFareith\CfGoogleAuthenticator\Utility\GoogleAuthenticatorUtility;
 use Psr\Http\Message\ResponseInterface;
+use TYPO3\CMS\Core\Authentication\Mfa\Provider\Totp;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\TypoScript\TypoScriptService;
 use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
@@ -62,18 +62,23 @@ class ContentController extends ActionController
     protected function checkNewMfaToken(): bool
     {
         if ($this->request->getMethod() === 'POST' && static::$instances === 1) {
-            $totp = $this->request->getParsedBody()['totp'] ?? '';
-            if (preg_match('/^[0-9]{6}$/', $totp)) {
-                if (ExtensionManagementUtility::isLoaded('cf_google_authenticator')) {
+            $oneTimePassword = $this->request->getParsedBody()['totp'] ?? '';
+            if (preg_match('/^[0-9]{6}$/', $oneTimePassword)) {
+                if (ExtensionManagementUtility::isLoaded('mfa_frontend')) {
                     $user = $this->getFrontendUserAuthentication()->user;
-                    $mfaEnabled = (bool)$user['tx_cfgoogleauthenticator_enabled'];
-                    $secret = $user['tx_cfgoogleauthenticator_secret'];
 
-                    if ($mfaEnabled && GoogleAuthenticatorUtility::verifyOneTimePassword($secret, $totp) === true) {
-                        $this->getFrontendUserAuthentication()->setSessionData('mfa_protect.time', $GLOBALS['EXEC_TIME']);
+                    $mfa = json_decode($user['mfa_frontend'] ?? '', true) ?? [];
+                    $mfaEnabled = $mfa['totp']['active'] ?? false;
+                    $secret = $mfa['totp']['secret'] ?? '';
 
-                        // TODO: shall we redirect instead in order to prevent serving from a POST request?
-                        return true;
+                    if ($mfaEnabled) {
+                        $totp = GeneralUtility::makeInstance(Totp::class, $secret, 'sha1');
+                        if ($totp->verifyTotp($oneTimePassword) === true) {
+                            $this->getFrontendUserAuthentication()->setSessionData('mfa_protect.time', $GLOBALS['EXEC_TIME']);
+
+                            // TODO: shall we redirect instead in order to prevent serving from a POST request?
+                            return true;
+                        }
                     }
                 } else {
                     throw new \RuntimeException('Sorry, we currently don\'t know how to validate your MFA token', 1696525584);
@@ -96,10 +101,13 @@ class ContentController extends ActionController
     {
         $user = $this->getFrontendUserAuthentication()->user;
 
-        if (ExtensionManagementUtility::isLoaded('cf_google_authenticator')) {
-            $hasTotp = (bool)$user['tx_cfgoogleauthenticator_enabled'];
-        } else {
+        if (ExtensionManagementUtility::isLoaded('mfa_frontend')) {
             // TODO: add support for any kind of MFA
+            $mfa = json_decode($user['mfa_frontend'] ?? '', true) ?? [];
+            $hasTotp = $mfa['totp']['active'] ?? false;
+        } else {
+            // NOTE: This part is not supposed to be working until that bug gets fixed:
+            //       https://forge.typo3.org/issues/102081
             $mfa = json_decode($user['mfa'] ?? '', true) ?? [];
             $hasTotp = $mfa['totp']['active'] ?? false;
         }
