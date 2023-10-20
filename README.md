@@ -18,7 +18,7 @@ This screenshot shows how a given content element will be protected:
 Install with Composer (there are currently no releases):
 
 ```bash
-composer require causal/mfa-protect:dev-main
+composer require causal/mfa-protect
 ```
 
 In addition, you will need some extension adding support for Frontend MFA. At the
@@ -28,7 +28,7 @@ time of writing, the only one the author can think of is its own extension
 You may install it with composer:
 
 ```bash
-composer require causal/mfa-frontend:dev-main
+composer require causal/mfa-frontend
 ```
 
 
