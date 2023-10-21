@@ -15,7 +15,9 @@ This screenshot shows how a given content element will be protected:
 
 ## Installation
 
-Install with Composer (there are currently no releases):
+Install the extension either from
+[TYPO3 Extension Repository (TER)](https://extensions.typo3.org/extension/mfa_protect/),
+or from packagist.org with Composer:
 
 ```bash
 composer require causal/mfa-protect
@@ -25,7 +27,7 @@ In addition, you will need some extension adding support for Frontend MFA. At th
 time of writing, the only one the author can think of is its own extension
 [EXT:mfa_frontend](https://extensions.typo3.org/extension/mfa_frontend).
 
-You may install it with composer:
+You may install it either from TER as well, or with Composer:
 
 ```bash
 composer require causal/mfa-frontend
