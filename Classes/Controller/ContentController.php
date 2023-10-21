@@ -19,6 +19,7 @@ namespace Causal\MfaProtect\Controller;
 use Psr\Http\Message\ResponseInterface;
 use TYPO3\CMS\Core\Authentication\Mfa\Provider\Totp;
 use TYPO3\CMS\Core\Database\ConnectionPool;
+use TYPO3\CMS\Core\Information\Typo3Version;
 use TYPO3\CMS\Core\TypoScript\TypoScriptService;
 use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -33,12 +34,15 @@ class ContentController extends ActionController
 
     protected ContentObjectRenderer $contentObjectRenderer;
 
+    protected string $typo3Branch;
+
     public function __construct(ContentObjectRenderer $contentObjectRenderer)
     {
         $this->contentObjectRenderer = $contentObjectRenderer;
+        $this->typo3Branch = (new Typo3Version())->getBranch();
     }
 
-    public function coverAction(): ResponseInterface
+    public function coverAction()
     {
         static::$instances++;
 
@@ -56,13 +60,21 @@ class ContentController extends ActionController
             $html = $this->view->render();
         }
 
+        if (version_compare($this->typo3Branch, '11.5', '<')) {
+            return $html;
+        }
         return $this->htmlResponse($html);
     }
 
     protected function checkNewMfaToken(): bool
     {
         if ($this->request->getMethod() === 'POST' && static::$instances === 1) {
-            $oneTimePassword = $this->request->getParsedBody()['totp'] ?? '';
+            if (version_compare($this->typo3Branch, '11.5', '>=')) {
+                $oneTimePassword = $this->request->getParsedBody()['totp'] ?? '';
+            } else {
+                $oneTimePassword = GeneralUtility::_POST()['totp'] ?? '';
+            }
+
             if (preg_match('/^[0-9]{6}$/', $oneTimePassword)) {
                 if (ExtensionManagementUtility::isLoaded('mfa_frontend')) {
                     $user = $this->getFrontendUserAuthentication()->user;
@@ -157,6 +169,10 @@ class ContentController extends ActionController
 
     protected function getFrontendUserAuthentication(): FrontendUserAuthentication
     {
+        if (version_compare($this->typo3Branch, '11.5', '<')) {
+            return $GLOBALS['TSFE']->fe_user;
+        }
+
         return $this->request->getAttribute('frontend.user');
     }
 }
