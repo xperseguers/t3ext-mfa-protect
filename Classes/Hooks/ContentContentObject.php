@@ -17,6 +17,8 @@ declare(strict_types=1);
 namespace Causal\MfaProtect\Hooks;
 
 use TYPO3\CMS\Core\Http\ServerRequest;
+use TYPO3\CMS\Core\Information\Typo3Version;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 class ContentContentObject
 {
@@ -35,6 +37,12 @@ class ContentContentObject
         // Ensure TYPO3 does not cache the output!
         /** @var ServerRequest $request */
         $request = $GLOBALS['TYPO3_REQUEST'];
-        $request->getAttribute('frontend.controller')->no_cache = true;
+        $typo3Version = GeneralUtility::makeInstance(Typo3Version::class);
+        if (version_compare($typo3Version->getBranch(), '11.5', '>=')) {
+            $request->getAttribute('frontend.controller')->no_cache = true;
+        } else {
+            // TYPO3 v10
+            $GLOBALS['TSFE']->no_cache = true;
+        }
     }
 }
