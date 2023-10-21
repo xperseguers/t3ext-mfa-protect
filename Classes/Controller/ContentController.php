@@ -86,10 +86,24 @@ class ContentController extends ActionController
                     if ($mfaEnabled) {
                         $totp = GeneralUtility::makeInstance(Totp::class, $secret, 'sha1');
                         if ($totp->verifyTotp($oneTimePassword) === true) {
+                            // Store last usage of TOTP
+                            $mfa['totp']['lastUsed'] = $GLOBALS['EXEC_TIME'];
+                            // Reset failed attempts
+                            $mfa['totp']['attempts'] = 0;
+                            $mfa['totp']['updated'] = $GLOBALS['EXEC_TIME'];
+                            $this->persistMfa($mfa);
+
+                            // Store last check time (note: we could rely on $mfa['totp']['lastUsed'] instead/as well
+                            // in that very context (using EXT:mfa_frontend)
                             $this->getFrontendUserAuthentication()->setSessionData('mfa_protect.time', $GLOBALS['EXEC_TIME']);
 
                             // TODO: shall we redirect instead in order to prevent serving from a POST request?
                             return true;
+                        } else {
+                            // Increase failed attempts
+                            $mfa['totp']['attempts']++;
+                            $mfa['totp']['updated'] = $GLOBALS['EXEC_TIME'];
+                            $this->persistMfa($mfa);
                         }
                     }
                 } else {
@@ -101,9 +115,31 @@ class ContentController extends ActionController
         return false;
     }
 
+    /**
+     * BEWARE: this method is not supposed to be called if EXT:mfa_frontend is loaded.
+     *
+     * @param array $mfa
+     */
+    protected function persistMfa(array $mfa): void
+    {
+        GeneralUtility::makeInstance(ConnectionPool::class)
+            ->getConnectionForTable('fe_users')
+            ->update(
+                'fe_users',
+                [
+                    'mfa_frontend' => json_encode($mfa),
+                ],
+                [
+                    'uid' => $this->getFrontendUserAuthentication()->user['uid'],
+                ]
+            );
+    }
+
     protected function isMfaTokenRecent(): bool
     {
         $tokenValidity = $this->getTokenValidity();
+        // Note: with EXT:mfa_frontend, we could rely on $mfa['totp']['lastUsed'] instead/as well
+        //       which would have the advantage of taking latest login into account
         $lastCheck = $this->getFrontendUserAuthentication()->getSessionData('mfa_protect.time') ?: 0;
 
         return $lastCheck >= $tokenValidity;
