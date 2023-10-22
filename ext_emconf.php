@@ -22,6 +22,8 @@ $EM_CONF[$_EXTKEY] = [
             'typo3' => '10.4.0-12.4.99'
         ],
         'conflicts' => [],
-        'suggests' => [],
+        'suggests' => [
+            'mfa_frontend' => ''
+        ],
     ],
 ];

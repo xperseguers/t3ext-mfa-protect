@@ -26,6 +26,9 @@
     "php": ">=7.4.0 <=7.4.99 || >=8.0.0 <=8.2.99",
     "typo3/cms-core": "^10 || ^11 || ^12"
   },
+  "suggest": {
+    "causal/mfa-frontend": "Enable MFA (Multi-Factor Authentication) for Frontend accounts."
+  },
   "autoload": {
     "psr-4": {
       "Causal\\MfaProtect\\": "Classes/"
