@@ -56,7 +56,7 @@ class DataHandler
         }
 
         // Enforce an access restriction for logged-in users
-        if ((bool)$record['tx_mfaprotect_enable'] && empty($record['fe_group'])) {
+        if ((bool)($record['tx_mfaprotect_enable'] ?? false) && empty($record['fe_group'])) {
             $fieldArray['fe_group'] = '-2'; // Show at any login
         }
     }
