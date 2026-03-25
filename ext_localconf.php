@@ -1,5 +1,4 @@
 <?php
-
 defined('TYPO3') || die();
 
 (static function (string $_EXTKEY) {
@@ -18,6 +17,7 @@ defined('TYPO3') || die();
         ],
         [
             \Causal\MfaProtect\Controller\ContentController::class => 'cover',
-        ]
+        ],
+        \TYPO3\CMS\Extbase\Utility\ExtensionUtility::PLUGIN_TYPE_CONTENT_ELEMENT
     );
 })('mfa_protect');
