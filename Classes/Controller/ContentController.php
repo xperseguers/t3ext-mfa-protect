@@ -80,8 +80,7 @@ class ContentController extends ActionController
                             $mfa['totp']['updated'] = $GLOBALS['EXEC_TIME'];
                             $this->persistMfa($mfa);
 
-                            // Store last check time (note: we could rely on $mfa['totp']['lastUsed'] instead/as well
-                            // in that very context (using EXT:mfa_frontend)
+                            // Store last check time
                             $this->getFrontendUserAuthentication()->setSessionData('mfa_protect.time', $GLOBALS['EXEC_TIME']);
 
                             // TODO: shall we redirect instead in order to prevent serving from a POST request?
@@ -125,9 +124,17 @@ class ContentController extends ActionController
     protected function isMfaTokenRecent(): bool
     {
         $tokenValidity = $this->getTokenValidity();
-        // Note: with EXT:mfa_frontend, we could rely on $mfa['totp']['lastUsed'] instead/as well
-        //       which would have the advantage of taking latest login into account
         $lastCheck = $this->getFrontendUserAuthentication()->getSessionData('mfa_protect.time') ?: 0;
+
+        // Take advantage of the latest login time if EXT:mfa_frontend is loaded
+        if (ExtensionManagementUtility::isLoaded('mfa_frontend')) {
+            $user = $this->getFrontendUserAuthentication()->user;
+            $mfa = json_decode($user['mfa_frontend'] ?? '', true) ?? [];
+            $lastUsed = $mfa['totp']['lastUsed'] ?? 0;
+            if ($lastUsed > $lastCheck) {
+                $lastCheck = $lastUsed;
+            }
+        }
 
         return $lastCheck >= $tokenValidity;
     }
