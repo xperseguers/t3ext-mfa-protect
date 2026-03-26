@@ -32,8 +32,7 @@ class ContentContentObject
 
         // Systematically replace content element with our protection plugin wrapper
         $row['header_layout'] = 100;    // hidden
-        $row['CType'] = 'list';
-        $row['list_type'] = 'mfaprotect_content';
+        $row['CType'] = 'mfaprotect_content';
         $row['tstamp'] = $GLOBALS['EXEC_TIME'];
 
         // Ensure TYPO3 does not cache the output!
