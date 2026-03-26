@@ -86,7 +86,7 @@ class ContainerProcessor extends \B13\Container\DataProcessing\ContainerProcesso
             ->fetchOne();
 
         if ($isMfaProtectEnabled) {
-            static::$instances++;
+            $this->registerProtectedContentElement();
 
             $validTokenProvided = $this->checkNewMfaToken();
 

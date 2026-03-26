@@ -40,7 +40,7 @@ class ContentController extends ActionController
 
     public function coverAction(): ResponseInterface
     {
-        static::$instances++;
+        $this->registerProtectedContentElement();
 
         $validTokenProvided = $this->checkNewMfaToken();
 

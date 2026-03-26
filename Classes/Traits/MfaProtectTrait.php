@@ -31,6 +31,18 @@ trait MfaProtectTrait
 
     protected static int $tokenValidity = 0;
 
+    protected function registerProtectedContentElement(): void
+    {
+        $request = $GLOBALS['TYPO3_REQUEST'];
+        $instancesObject = $request->getAttribute('mfa_protect.instances');
+        if ($instancesObject === null) {
+            $instancesObject = new \stdClass();
+            $instancesObject->instances = 0;
+            $GLOBALS['TYPO3_REQUEST'] = $request = $request->withAttribute('mfa_protect.instances', $instancesObject);
+        }
+        static::$instances = ++$instancesObject->instances;
+    }
+
     protected function checkNewMfaToken(): bool
     {
         if ($this->getRequest()->getMethod() === 'POST' && static::$instances === 1) {
