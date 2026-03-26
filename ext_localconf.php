@@ -1,4 +1,5 @@
 <?php
+
 defined('TYPO3') || die();
 
 (static function (string $_EXTKEY) {
