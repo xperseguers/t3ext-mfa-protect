@@ -2,7 +2,7 @@
       data-namespace-typo3-fluid="true">
 
 <f:if condition="{isFirstOnPage}">
-    <link rel="stylesheet" href="{f:uri.resource(path: 'Css/otp.css')}" media="all"/>
+    <link rel="stylesheet" href="{f:uri.resource(extensionName: 'mfa_protect', path: 'Css/otp.css')}" media="all"/>
 </f:if>
 
 <div class="mfaprotect">
@@ -52,7 +52,7 @@
         </div>
     </form>
 
-    <script src="{f:uri.resource(path: 'JavaScript/otp.js')}"></script>
+    <script src="{f:uri.resource(extensionName: 'mfa_protect', path: 'JavaScript/otp.js')}"></script>
 </f:section>
 
 <f:section name="configureMfa">

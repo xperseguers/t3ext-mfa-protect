@@ -17,9 +17,11 @@ declare(strict_types=1);
 namespace Causal\MfaProtect\Hooks;
 
 use TYPO3\CMS\Core\Http\ServerRequest;
-use TYPO3\CMS\Core\Information\Typo3Version;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
+/**
+ * @deprecated since TYPO3 v13, migrated as \Causal\MfaProtect\EventListener\FrontendContentObjectRecordsEventListener
+ */
 class ContentContentObject
 {
     public function modifyDBRow(array &$row, string $table): void
@@ -37,12 +39,6 @@ class ContentContentObject
         // Ensure TYPO3 does not cache the output!
         /** @var ServerRequest $request */
         $request = $GLOBALS['TYPO3_REQUEST'];
-        $typo3Version = GeneralUtility::makeInstance(Typo3Version::class);
-        if (version_compare($typo3Version->getBranch(), '11.5', '>=')) {
-            $request->getAttribute('frontend.controller')->no_cache = true;
-        } else {
-            // TYPO3 v10
-            $GLOBALS['TSFE']->no_cache = true;
-        }
+        $request->getAttribute('frontend.controller')->no_cache = true;
     }
 }

@@ -19,7 +19,6 @@ namespace Causal\MfaProtect\Controller;
 use Psr\Http\Message\ResponseInterface;
 use TYPO3\CMS\Core\Authentication\Mfa\Provider\Totp;
 use TYPO3\CMS\Core\Database\ConnectionPool;
-use TYPO3\CMS\Core\Information\Typo3Version;
 use TYPO3\CMS\Core\TypoScript\TypoScriptService;
 use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -32,17 +31,12 @@ class ContentController extends ActionController
     protected static int $instances = 0;
     protected static int $tokenValidity = 0;
 
-    protected ContentObjectRenderer $contentObjectRenderer;
+    public function __construct(
+        private readonly ContentObjectRenderer $contentObjectRenderer
+    )
+    {}
 
-    protected string $typo3Branch;
-
-    public function __construct(ContentObjectRenderer $contentObjectRenderer)
-    {
-        $this->contentObjectRenderer = $contentObjectRenderer;
-        $this->typo3Branch = (new Typo3Version())->getBranch();
-    }
-
-    public function coverAction()
+    public function coverAction(): ResponseInterface
     {
         static::$instances++;
 
@@ -60,20 +54,13 @@ class ContentController extends ActionController
             $html = $this->view->render();
         }
 
-        if (version_compare($this->typo3Branch, '11.5', '<')) {
-            return $html;
-        }
         return $this->htmlResponse($html);
     }
 
     protected function checkNewMfaToken(): bool
     {
         if ($this->request->getMethod() === 'POST' && static::$instances === 1) {
-            if (version_compare($this->typo3Branch, '11.5', '>=')) {
-                $oneTimePassword = $this->request->getParsedBody()['totp'] ?? '';
-            } else {
-                $oneTimePassword = GeneralUtility::_POST()['totp'] ?? '';
-            }
+            $oneTimePassword = $this->request->getParsedBody()['totp'] ?? '';
 
             if (preg_match('/^[0-9]{6}$/', $oneTimePassword)) {
                 if (ExtensionManagementUtility::isLoaded('mfa_frontend')) {
@@ -93,8 +80,7 @@ class ContentController extends ActionController
                             $mfa['totp']['updated'] = $GLOBALS['EXEC_TIME'];
                             $this->persistMfa($mfa);
 
-                            // Store last check time (note: we could rely on $mfa['totp']['lastUsed'] instead/as well
-                            // in that very context (using EXT:mfa_frontend)
+                            // Store last check time
                             $this->getFrontendUserAuthentication()->setSessionData('mfa_protect.time', $GLOBALS['EXEC_TIME']);
 
                             // TODO: shall we redirect instead in order to prevent serving from a POST request?
@@ -116,7 +102,7 @@ class ContentController extends ActionController
     }
 
     /**
-     * BEWARE: this method is not supposed to be called if EXT:mfa_frontend is loaded.
+     * BEWARE: this method is only supposed to be called if EXT:mfa_frontend is loaded.
      *
      * @param array $mfa
      */
@@ -138,9 +124,17 @@ class ContentController extends ActionController
     protected function isMfaTokenRecent(): bool
     {
         $tokenValidity = $this->getTokenValidity();
-        // Note: with EXT:mfa_frontend, we could rely on $mfa['totp']['lastUsed'] instead/as well
-        //       which would have the advantage of taking latest login into account
         $lastCheck = $this->getFrontendUserAuthentication()->getSessionData('mfa_protect.time') ?: 0;
+
+        // Take advantage of the latest login time if EXT:mfa_frontend is loaded
+        if (ExtensionManagementUtility::isLoaded('mfa_frontend')) {
+            $user = $this->getFrontendUserAuthentication()->user;
+            $mfa = json_decode($user['mfa_frontend'] ?? '', true) ?? [];
+            $lastUsed = $mfa['totp']['lastUsed'] ?? 0;
+            if ($lastUsed > $lastCheck) {
+                $lastCheck = $lastUsed;
+            }
+        }
 
         return $lastCheck >= $tokenValidity;
     }
@@ -165,7 +159,7 @@ class ContentController extends ActionController
 
     protected function renderActualContent(): string
     {
-        $data = $this->configurationManager->getContentObject()->data;
+        $data = $this->request->getAttribute('currentContentObject')->data;
         $row = GeneralUtility::makeInstance(ConnectionPool::class)
             ->getConnectionForTable('tt_content')
             ->select(
@@ -205,10 +199,6 @@ class ContentController extends ActionController
 
     protected function getFrontendUserAuthentication(): FrontendUserAuthentication
     {
-        if (version_compare($this->typo3Branch, '11.5', '<')) {
-            return $GLOBALS['TSFE']->fe_user;
-        }
-
         return $this->request->getAttribute('frontend.user');
     }
 }

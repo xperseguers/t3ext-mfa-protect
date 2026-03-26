@@ -6,3 +6,10 @@ services:
 
   Causal\MfaProtect\:
     resource: '../Classes/*'
+
+  Causal\MfaProtect\EventListener\FrontendContentObjectRecordsEventListener:
+    tags:
+      - name: event.listener
+        identifier: 'causal/mfa-protect'
+        method: 'modifyDBRow'
+        event: TYPO3\CMS\Frontend\ContentObject\Event\ModifyRecordsAfterFetchingContentEvent
