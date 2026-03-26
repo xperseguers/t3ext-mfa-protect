@@ -103,7 +103,7 @@ class ContentController extends ActionController
     }
 
     /**
-     * BEWARE: this method is not supposed to be called if EXT:mfa_frontend is loaded.
+     * BEWARE: this method is only supposed to be called if EXT:mfa_frontend is loaded.
      *
      * @param array $mfa
      */
@@ -152,7 +152,7 @@ class ContentController extends ActionController
 
     protected function renderActualContent(): string
     {
-        $data = $this->configurationManager->getContentObject()->data;
+        $data = $this->request->getAttribute('currentContentObject')->data;
         $row = GeneralUtility::makeInstance(ConnectionPool::class)
             ->getConnectionForTable('tt_content')
             ->select(
