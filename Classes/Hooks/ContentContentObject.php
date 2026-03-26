@@ -19,6 +19,9 @@ namespace Causal\MfaProtect\Hooks;
 use TYPO3\CMS\Core\Http\ServerRequest;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
+/**
+ * @deprecated since TYPO3 v13, migrated as \Causal\MfaProtect\EventListener\FrontendContentObjectRecordsEventListener
+ */
 class ContentContentObject
 {
     public function modifyDBRow(array &$row, string $table): void
