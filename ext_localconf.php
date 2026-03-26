@@ -24,4 +24,10 @@ defined('TYPO3') || die();
         ],
         \TYPO3\CMS\Extbase\Utility\ExtensionUtility::PLUGIN_TYPE_CONTENT_ELEMENT
     );
+
+    if (\TYPO3\CMS\Core\Utility\ExtensionManagementUtility::isLoaded('container')) {
+        $GLOBALS['TYPO3_CONF_VARS']['SYS']['Objects'][\B13\Container\DataProcessing\ContainerProcessor::class] = [
+            'className' => \Causal\MfaProtect\Xclass\Container\DataProcessing\ContainerProcessor::class,
+        ];
+    }
 })('mfa_protect');

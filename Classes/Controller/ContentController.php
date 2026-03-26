@@ -17,7 +17,9 @@ declare(strict_types=1);
 
 namespace Causal\MfaProtect\Controller;
 
+use Causal\MfaProtect\Traits\MfaProtectTrait;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Core\Authentication\Mfa\Provider\Totp;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\TypoScript\TypoScriptService;
@@ -29,8 +31,7 @@ use TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer;
 
 class ContentController extends ActionController
 {
-    protected static int $instances = 0;
-    protected static int $tokenValidity = 0;
+    use MfaProtectTrait;
 
     public function __construct(
         private readonly ContentObjectRenderer $contentObjectRenderer
@@ -58,106 +59,6 @@ class ContentController extends ActionController
         return $this->htmlResponse($html);
     }
 
-    protected function checkNewMfaToken(): bool
-    {
-        if ($this->request->getMethod() === 'POST' && static::$instances === 1) {
-            $oneTimePassword = $this->request->getParsedBody()['totp'] ?? '';
-
-            if (preg_match('/^[0-9]{6}$/', $oneTimePassword)) {
-                if (ExtensionManagementUtility::isLoaded('mfa_frontend')) {
-                    $user = $this->getFrontendUserAuthentication()->user;
-
-                    $mfa = json_decode($user['mfa_frontend'] ?? '', true) ?? [];
-                    $mfaEnabled = $mfa['totp']['active'] ?? false;
-                    $secret = $mfa['totp']['secret'] ?? '';
-
-                    if ($mfaEnabled) {
-                        $totp = GeneralUtility::makeInstance(Totp::class, $secret, 'sha1');
-                        if ($totp->verifyTotp($oneTimePassword) === true) {
-                            // Store last usage of TOTP
-                            $mfa['totp']['lastUsed'] = $GLOBALS['EXEC_TIME'];
-                            // Reset failed attempts
-                            $mfa['totp']['attempts'] = 0;
-                            $mfa['totp']['updated'] = $GLOBALS['EXEC_TIME'];
-                            $this->persistMfa($mfa);
-
-                            // Store last check time
-                            $this->getFrontendUserAuthentication()->setSessionData('mfa_protect.time', $GLOBALS['EXEC_TIME']);
-
-                            // TODO: shall we redirect instead in order to prevent serving from a POST request?
-                            return true;
-                        } else {
-                            // Increase failed attempts
-                            $mfa['totp']['attempts']++;
-                            $mfa['totp']['updated'] = $GLOBALS['EXEC_TIME'];
-                            $this->persistMfa($mfa);
-                        }
-                    }
-                } else {
-                    throw new \RuntimeException('Sorry, we currently don\'t know how to validate your MFA token', 1696525584);
-                }
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * BEWARE: this method is only supposed to be called if EXT:mfa_frontend is loaded.
-     *
-     * @param array $mfa
-     */
-    protected function persistMfa(array $mfa): void
-    {
-        GeneralUtility::makeInstance(ConnectionPool::class)
-            ->getConnectionForTable('fe_users')
-            ->update(
-                'fe_users',
-                [
-                    'mfa_frontend' => json_encode($mfa),
-                ],
-                [
-                    'uid' => $this->getFrontendUserAuthentication()->user['uid'],
-                ]
-            );
-    }
-
-    protected function isMfaTokenRecent(): bool
-    {
-        $tokenValidity = $this->getTokenValidity();
-        $lastCheck = $this->getFrontendUserAuthentication()->getSessionData('mfa_protect.time') ?: 0;
-
-        // Take advantage of the latest login time if EXT:mfa_frontend is loaded
-        if (ExtensionManagementUtility::isLoaded('mfa_frontend')) {
-            $user = $this->getFrontendUserAuthentication()->user;
-            $mfa = json_decode($user['mfa_frontend'] ?? '', true) ?? [];
-            $lastUsed = $mfa['totp']['lastUsed'] ?? 0;
-            if ($lastUsed > $lastCheck) {
-                $lastCheck = $lastUsed;
-            }
-        }
-
-        return $lastCheck >= $tokenValidity;
-    }
-
-    protected function getAvailableMfaProviders(): array
-    {
-        $user = $this->getFrontendUserAuthentication()->user;
-
-        if (ExtensionManagementUtility::isLoaded('mfa_frontend')) {
-            // TODO: add support for any kind of MFA
-            $mfa = json_decode($user['mfa_frontend'] ?? '', true) ?? [];
-            $hasTotp = $mfa['totp']['active'] ?? false;
-        } else {
-            // NOTE: This part is not supposed to be working until that bug gets fixed:
-            //       https://forge.typo3.org/issues/102081
-            $mfa = json_decode($user['mfa'] ?? '', true) ?? [];
-            $hasTotp = $mfa['totp']['active'] ?? false;
-        }
-
-        return $hasTotp ? ['totp'] : [];
-    }
-
     protected function renderActualContent(): string
     {
         $data = $this->request->getAttribute('currentContentObject')->data;
@@ -175,31 +76,13 @@ class ContentController extends ActionController
         return $this->contentObjectRenderer->cObjGetSingle('< tt_content', []);
     }
 
-    protected function getTokenValidity(): int
+    protected function getSettings(): array
     {
-        if (static::$tokenValidity > 0) {
-            return static::$tokenValidity;
-        }
-
-        $tsKey = 'tokenValidity';
-        $tokenValidity = $this->settings[$tsKey] ?? null;
-        if (is_array($tokenValidity)) {
-            // Dynamic value
-            $typoScriptService = GeneralUtility::makeInstance(TypoScriptService::class);
-            $settings = $typoScriptService->convertPlainArrayToTypoScriptArray($this->settings);
-            $tokenValidity = $this->contentObjectRenderer->cObjGetSingle(
-                $settings[$tsKey] ?? '',
-                $settings[$tsKey . '.'] ?? []
-            );
-        }
-
-        $tokenValidity = max(0, (int)$tokenValidity);
-        static::$tokenValidity = $GLOBALS['EXEC_TIME'] - 60 * $tokenValidity;
-        return static::$tokenValidity;
+        return $this->settings;
     }
 
-    protected function getFrontendUserAuthentication(): FrontendUserAuthentication
+    protected function getRequest(): ServerRequestInterface
     {
-        return $this->request->getAttribute('frontend.user');
+        return $this->request;
     }
 }
