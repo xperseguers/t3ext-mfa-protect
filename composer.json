@@ -26,7 +26,7 @@
   "license": "GPL-3.0-or-later",
   "require": {
     "php": ">=8.1.0 <=8.5.99",
-    "typo3/cms-core": "^12 || ^13 || 14.*.*@dev"
+    "typo3/cms-core": "^12 || ^13 || ^14"
   },
   "suggest": {
     "causal/mfa-frontend": "Enable MFA (Multi-Factor Authentication) for Frontend accounts."
